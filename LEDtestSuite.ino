@@ -10,40 +10,46 @@ PhotoDiode input Yellow: A3
 
 
 */
+#include <String.h>
 
-int RedLEDpinTest1 = 8;
-int BlueLEDpinTest1 = 9;
-int YellowLEDpinTest1 = 10;
-int Test2LEDs = 11;
+int RedLEDpinTest1 = 9;
+int BlueLEDpinTest1 = 8;
 
 
 void setup() {
+  Serial.begin(9600);
   pinMode(RedLEDpinTest1, OUTPUT);
   pinMode(BlueLEDpinTest1, OUTPUT);
-  pinMode(YellowLEDpinTest1, OUTPUT);
-  pinMode(Test2LEDs, OUTPUT);
 }
 
 void loop() {
+  String Colors[] = {"Red","Blue"};
 
   //Test 1 sensing multiplex circuit
-  int Sensing[3]; //stores [red,blue,yellow]
-  int plex[3] = {1,0,0};
+  
+  float Sensing[2]; //stores [red,blue,yellow]
+  int plex[2] = {1,0};
 
-  for (int i = 0; i < 3; i++) {
+  for (int i = 0; i < 2; i++) {
     
     digitalWrite(RedLEDpinTest1, plex[i]);
-    digitalWrite(YellowLEDpinTest1, plex[(i+1)%3]);
-    digitalWrite(BlueLEDpinTest1, plex[(i+2)%3]);
+    digitalWrite(BlueLEDpinTest1, plex[(i+1)%2]);
+    // digitalWrite(BlueLEDpinTest1, plex[(i+2)%3]);
     
+    delay(50);
+    float sensorValue = analogRead(A0) * (5.0/1023);
+    Sensing[i] = sensorValue;
     delay(10);
-    int sensorValue = analogRead(A0);
-    Sensing[i] = sensorValue * (5.0 / 1023.0);
-  }
+      }
   //Then save Sensing to a file
   //test 2
-
-
+    for (int i = 0; i < 2; i++) {
+      Serial.print(Colors[i]);
+      Serial.print(" : ");
+    Serial.print(Sensing[i]);
+    Serial.print("   ");
+  }
+Serial.print("\n");
 }
 
 
