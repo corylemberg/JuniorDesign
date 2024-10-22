@@ -2,6 +2,7 @@
 
 Status: Git is setup. Lets get active.
 
+**To Do List**
 - [x] Arduino State Machine
 - [x] Motor Control
 - [x] Server Communication
