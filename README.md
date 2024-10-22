@@ -1,3 +1,3 @@
-# Junior Design Project
+# Junior Design Project 🥶
 
 Status: Git is setup. Lets get active.
