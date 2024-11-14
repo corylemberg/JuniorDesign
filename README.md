@@ -8,7 +8,7 @@ Status: Git is setup. Lets get active.
 - [x] Server Communication
 - [x] Color Sensing
 - [ ] Mechanical Build
-- [ ] Collision Avoidance
+- [X] Collision Avoidance
 - [ ] Lane Following
 - [ ] Solo Demo
 - [ ] Server Communication
