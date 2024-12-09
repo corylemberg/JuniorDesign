@@ -1,12 +1,20 @@
 #include <ArduinoHttpClient.h>
 #include <WiFi.h>
 #include <String.h>
+#include "SoftwareSerial.h"
+#include "DFRobotDFPlayerMini.h"
+
+static const uint8_t D9 = 9;
+static const uint8_t D11 = 11;
+
+SoftwareSerial mySerial(D9, D11);
+DFRobotDFPlayerMini MP3player;
 
 int buttonState = 0;
 int previousButtonState = 0;
 int stateVariable = 0;
 
-int RedLEDpinTest1 = 9;
+int RedLEDpinTest1 = 7;
 int BlueLEDpinTest1 = 8;
 
 char ssid[] = "tufts_eecs";
@@ -24,9 +32,19 @@ int status = WL_IDLE_STATUS;
 int currIndex = 0;
 bool move = false;
 
+int soundCount = 0;
+
+int movePrev = 0;
+
 // the setup function runs once when you press reset or power the board
 void setup() {
   Serial.begin(9600);
+  mySerial.begin(9600);
+  
+  MP3player.begin(mySerial);
+
+  MP3player.volume(10);
+  // delay(500);
   // while (status != WL_CONNECTED) {
   //   Serial.print("Attempting to connect to Network named: ");
   //   Serial.println(ssid);                   // print the network name (SSID);
@@ -63,18 +81,18 @@ void setup() {
 
 
 void loop() {
-  // int sensorValue = analogRead(A0);
-  // float voltage = sensorValue * (5.0 / 1023.0);
+  //int sensorValue = analogRead(A0);
+  //float voltage = sensorValue * (5.0 / 1023.0);
   // Serial.print("Wifi Status: ");
   // Serial.println(WiFi.status());
-  // buttonState = digitalRead(2);
+ // buttonState = digitalRead(2);
   // if ((buttonState == HIGH) && (previousButtonState == LOW)) {
   //   Serial.println("STATE CHANGE");
   //   changeStateVariable();
   //   delay(50);
   // }
-  //forward();
-  previousButtonState = buttonState;
+  // forward();
+ // previousButtonState = buttonState;
   
   // int messageSize = client.parseMessage();
   //   if (messageSize > 0) {
@@ -87,6 +105,9 @@ void loop() {
   //     else if (message == "WebClient_4A9EDB0160D5.motors.-255.255") {
   //       backward();
   //     }
+  //     else if (message == "WebClient_4A9EDB0160D5.motors.0.200") {
+  //       leftTurn();
+  //     }
   //     else if (message == "WebClient_4A9EDB0160D5.motors.0.0") {
   //       stopAll();
   //     }
@@ -95,8 +116,8 @@ void loop() {
   //     }
   //   }
   //   // wait 10ms
-  //delay(10);
-  float Sensing[3]; //stores [red,blue,yellow]
+  // delay(10);
+  float Sensing[2]; //stores [red,blue,yellow]
   int plex[2] = {1,0};
   for (int i = 0; i < 2; i++) {
     digitalWrite(BlueLEDpinTest1, 0);
@@ -104,7 +125,6 @@ void loop() {
 
     delay(50);
     float ambientValue = analogRead(A0) * (5.0/1023);
-    Sensing[3] = ambientValue;
     delay(10);
 
     digitalWrite(RedLEDpinTest1, plex[i]);
@@ -116,83 +136,103 @@ void loop() {
     delay(10);
   // Serial.println("disconnected");         
   }
-  
-    int pathColors[5] = {};
-
+    int pathColorsSize = 4;
+    int pathColors[pathColorsSize] = {};
+    Serial.print("sensor1: ");
+    Serial.print(Sensing[0]);
+    Serial.print("   sensor2: ");
+    Serial.print(Sensing[1]);
     Serial.print("\n");
     if ((fabs(Sensing[0] - Sensing[1]) < 0.25)) {
       // Serial.println(Sensing[0]);
       if (Sensing[0] > 1.4) {
-        Serial.println("YELLOW");
         pathColors[currIndex % 5] = 1;
         //rightTurn();
         //forward();
       }
       else {
-        Serial.println("BLACK");
+        
         pathColors[currIndex % 5] = 2;
         //stopAll();
       }
     }
     else {
       if (Sensing[0] > Sensing[1]) {
-        Serial.println("RED");
         pathColors[currIndex % 5] = 3;
         //forward();
       } 
       else if (Sensing[0] < Sensing[1]) {
-        Serial.println("BLUE");
         pathColors[currIndex % 5] = 4;
         //stopAll();
       }
     }
 
     int sameCount = 0;
-    for (int j = 0; j < 4; j++) {
+    for (int j = 0; j < pathColorsSize; j++) {
       // Serial.println(pathColors[j]);
       // Serial.println(pathColors[j + 1]);
       if (pathColors[j + 1] == pathColors[j]) {
-        Serial.println("HEEEEEEEERE");
         sameCount++;
       }
     }
 
-    if (sameCount == 3) {
+    //Serial.println(sameCount);
+
+    if (sameCount >= pathColorsSize-1) {
       move = true;
-       Serial.println("GOOOOOO");
+      //Serial.println("HEEEEEEEERE");
+      //Serial.println("Robust Sensed");
     }
     else {
       move = false;
-      Serial.println("STOOOOOOOOOP");
     }
-    
+    //Serial.println(move);
   float wallSense = analogRead(A1) * (5.0/1023);
+  //Serial.print("wallSenseValue: ");
+  //Serial.println(wallSense);
   // put your main code here, to run repeatedly:
-  if (wallSense > 1.00) {
-    stopAll();
+  if (wallSense >= 0.0) {
+   // Serial.println(wallSense);
+   // stopAll();
   }
-  else {
+  //else {
     if (move == true) {
       if (pathColors[0] == 1) {
+        if (movePrev != pathColors[0]) {
+          playYellow();
+          forward();
+        }
         Serial.println("YELLOW");
-        forward();
+        movePrev = 1;
       }
       else if (pathColors[0] == 2) {
+        if (movePrev != pathColors[0]) {
+          playBlack();
+          forward();
+        }
         Serial.println("BLACK");
-        stopAll();
+        movePrev = 2;
       }
       else if (pathColors[0] == 3) {
+        if (movePrev != pathColors[0]) {
+          playRed();
+          forward();
+        }
         Serial.println("RED");
-        forward();
+        movePrev = 3;
       }
       else if (pathColors[0] == 4) {
+        if (movePrev != pathColors[0]) {
+          playBlue();
+          forward();
+        }
         Serial.println("BLUE");
-        backward();
+        movePrev = 4;
       }
     }
-  }
+ // }
 
-    currIndex++;
+  currIndex++;
 }
 
 void changeStateVariable() {
@@ -276,7 +316,7 @@ void leftTurn() {
   Serial.println("LEFT");
   backwardLeft();
   forwardRight();
-  delay(100);
+  //delay(100);
 }
 
 void rightTurn() {
@@ -305,5 +345,25 @@ void stopAll() {
   stopMotorRight();
   stopMotorLeft();
   //delay(100);
+}
+
+void playBlue() {
+  MP3player.play(2);
+ // delay(500);
+}
+
+void playRed() {
+  MP3player.play(3);
+  //delay(500);
+}
+
+void playYellow() {
+  MP3player.play(4);
+  //delay(500);
+}
+
+void playBlack() {
+  MP3player.play(5);
+  //delay(500);
 }
 
