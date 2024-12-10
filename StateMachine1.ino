@@ -178,7 +178,7 @@ void loop() {
    stopAll();
   }
   else {
-    laneFo 
+    laneFollow(4,move); 
     // if (move == true) {
     //  if (pathColors[0] == 1) {
     //    if (movePrev != pathColors[0]) {
@@ -291,13 +291,13 @@ int colorSensing(float* Sensing) {
 }
 
 void laneFollow(int colorOfLane, bool move) {
+  float Sensing[3];
   int color = colorSensing(Sensing);
-  if (currentColor == colorOfLane) {
+  if (color == colorOfLane) {
     forward();
   } else {
-    float Sensing[3];
+    
     int sweeper = 5;
-    int color;
     bool laneFound = false;
     for (int j = 0; j < sweeper; j++) {
       leftTurn();
@@ -450,4 +450,3 @@ void playBlack() {
   MP3player.play(5);
   //delay(500);
 }
-
