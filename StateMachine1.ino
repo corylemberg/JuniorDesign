@@ -35,15 +35,18 @@ bool move = false;
 int soundCount = 0;
 
 int movePrev = 0;
+int pathColorsSize = 2;
+int pathColors[2];
 
 // the setup function runs once when you press reset or power the board
 void setup() {
+
   Serial.begin(9600);
   mySerial.begin(9600);
   
   MP3player.begin(mySerial);
 
-  MP3player.volume(10);
+  MP3player.volume(0);
   // delay(500);
   // while (status != WL_CONNECTED) {
   //   Serial.print("Attempting to connect to Network named: ");
@@ -77,10 +80,12 @@ void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
   previousButtonState = digitalRead(2);
   String Colors[] = {"Red","Blue", "Ambient"};
+  
 }
 
 
 void loop() {
+    //digitalWrite(2, HIGH);
   //int sensorValue = analogRead(A0);
   //float voltage = sensorValue * (5.0 / 1023.0);
   // Serial.print("Wifi Status: ");
@@ -117,55 +122,31 @@ void loop() {
   //   }
   //   // wait 10ms
   // delay(10);
-  float Sensing[2]; //stores [red,blue,yellow]
-  int plex[2] = {1,0};
-  for (int i = 0; i < 2; i++) {
-    digitalWrite(BlueLEDpinTest1, 0);
-    digitalWrite(RedLEDpinTest1, 0);
 
-    delay(50);
-    float ambientValue = analogRead(A0) * (5.0/1023);
-    delay(10);
+  float Sensing[3];
 
-    digitalWrite(RedLEDpinTest1, plex[i]);
-    digitalWrite(BlueLEDpinTest1, plex[(i+1)%2]);
-      
-    delay(50);
-    float sensorValue = analogRead(A0) * (5.0/1023);
-    Sensing[i] = sensorValue/ambientValue;
-    delay(10);
-  // Serial.println("disconnected");         
-  }
-    int pathColorsSize = 4;
-    int pathColors[pathColorsSize] = {};
-    Serial.print("sensor1: ");
-    Serial.print(Sensing[0]);
-    Serial.print("   sensor2: ");
-    Serial.print(Sensing[1]);
-    Serial.print("\n");
-    if ((fabs(Sensing[0] - Sensing[1]) < 0.25)) {
-      // Serial.println(Sensing[0]);
-      if (Sensing[0] > 1.4) {
-        pathColors[currIndex % 5] = 1;
-        //rightTurn();
-        //forward();
-      }
-      else {
-        
-        pathColors[currIndex % 5] = 2;
-        //stopAll();
-      }
-    }
-    else {
-      if (Sensing[0] > Sensing[1]) {
-        pathColors[currIndex % 5] = 3;
-        //forward();
-      } 
-      else if (Sensing[0] < Sensing[1]) {
-        pathColors[currIndex % 5] = 4;
-        //stopAll();
-      }
-    }
+  pathColors[currIndex % pathColorsSize] = colorSensing(Sensing);
+
+  //  Serial.print("Difference: ");
+  //  Serial.println(Sensing[0] - Sensing[1]);
+   //Serial.print("RED: ");
+   //Serial.print(Sensing[0]);
+   //Serial.print("  BLUE: ");
+   //Serial.print(Sensing[1]);
+   //Serial.print("  AMBIENT VALUE: ");
+   //Serial.print(Sensing[2]);
+   //Serial.print("\n");
+  //float diff = Sensing[0] - Sensing[1];
+  // 
+  // if ((fabs(diff) < 3 && fabs(diff) > 0.3)) {
+  //   pathColors[currIndex % pathColorsSize] = 2; //black
+  // } else if (fabs(diff) < 0.3) {
+  //   pathColors[currIndex % pathColorsSize] = 1; //yellow
+  // } else if (diff > 3.1) {
+  //   pathColors[currIndex % pathColorsSize] = 3;//red blue
+  // } else if (diff < -8) {
+  //   pathColors[currIndex % pathColorsSize] = 4;
+  // }
 
     int sameCount = 0;
     for (int j = 0; j < pathColorsSize; j++) {
@@ -176,7 +157,7 @@ void loop() {
       }
     }
 
-    //Serial.println(sameCount);
+    Serial.println(sameCount);
 
     if (sameCount >= pathColorsSize-1) {
       move = true;
@@ -187,54 +168,157 @@ void loop() {
       move = false;
     }
     //Serial.println(move);
-  float wallSense = analogRead(A1) * (5.0/1023);
+  float wallSense = analogRead(A5) * (5.0/1023);
   //Serial.print("wallSenseValue: ");
   //Serial.println(wallSense);
   // put your main code here, to run repeatedly:
-  if (wallSense >= 0.0) {
-   // Serial.println(wallSense);
-   // stopAll();
+  if (wallSense >= 1.0) {
+    Serial.println("WALL:");
+   Serial.println(wallSense);
+   stopAll();
   }
-  //else {
-    if (move == true) {
-      if (pathColors[0] == 1) {
-        if (movePrev != pathColors[0]) {
-          playYellow();
-          forward();
-        }
-        Serial.println("YELLOW");
-        movePrev = 1;
-      }
-      else if (pathColors[0] == 2) {
-        if (movePrev != pathColors[0]) {
-          playBlack();
-          forward();
-        }
-        Serial.println("BLACK");
-        movePrev = 2;
-      }
-      else if (pathColors[0] == 3) {
-        if (movePrev != pathColors[0]) {
-          playRed();
-          forward();
-        }
-        Serial.println("RED");
-        movePrev = 3;
-      }
-      else if (pathColors[0] == 4) {
-        if (movePrev != pathColors[0]) {
-          playBlue();
-          forward();
-        }
-        Serial.println("BLUE");
-        movePrev = 4;
-      }
-    }
- // }
+  else {
+    laneFo 
+    // if (move == true) {
+    //  if (pathColors[0] == 1) {
+    //    if (movePrev != pathColors[0]) {
+    //      playYellow();
+    //    }
+    //    Serial.println("YELLOW");
+    //    movePrev = 1;
+    //    leftTurn();
+    //  }
+    //  else if (pathColors[0] == 2) {
+    //    if (movePrev != pathColors[0]) {
+    //      playBlack();
+    //    }
+    //    Serial.println("BLACK");
+    //    movePrev = 2;
+    //    stopAll();
+    //  }
+    //  else if (pathColors[0] == 3) {
+    //    if (movePrev != pathColors[0]) {
+    //      playRed();
+    //    }
+    //    Serial.println("RED");
+    //    movePrev = 3;
+    //    rightTurn();
+    //  }
+    //  else if (pathColors[0] == 4) {
+    //    if (movePrev != pathColors[0]) {
+    //      playBlue();
+    //    }
+    //    Serial.println("BLUE");
+    //    movePrev = 4;
+    //    forward();
+    //  }
+    //}
+    // if (move == true) {
+    //   if (pathColors[0] == 1) {
+    //     if (movePrev != pathColors[0]) {
+    //       playYellow();
+    //     }
+    //     Serial.println("YELLOW");
+    //     movePrev = 1;
+    //     leftTurn();
+    //   }
+    //   else if (pathColors[0] == 2) {
+    //     if (movePrev != pathColors[0]) {
+    //       playBlack();
+    //     }
+    //     Serial.println("BLACK");
+    //     movePrev = 2;
+    //     stopAll();
+    //   }
+    //   else if (pathColors[0] == 3) {
+    //     if (movePrev != pathColors[0]) {
+    //       playRed();
+    //     }
+    //     Serial.println("RED");
+    //     movePrev = 3;
+    //     rightTurn();
+    //   }
+    //   else if (pathColors[0] == 4) {
+    //     if (movePrev != pathColors[0]) {
+    //       playBlue();
+    //     }
+    //     Serial.println("BLUE");
+    //     movePrev = 4;
+    //     forward();
+    //   }
+    // }
+ }
 
   currIndex++;
 }
 
+int colorSensing(float* Sensing) {
+  
+  // Sensing stores [red,blue,yellow]
+  int plex[2] = {1,0};
+  digitalWrite(BlueLEDpinTest1, 0);
+  digitalWrite(RedLEDpinTest1, 0);
+  delay(50);
+  float ambientValue = analogRead(A0) * (5.0/1023);
+  delay(10);
+  Sensing[2] = ambientValue;
+  for (int i = 0; i < 2; i++) {
+    
+
+    digitalWrite(RedLEDpinTest1, plex[i]);
+    digitalWrite(BlueLEDpinTest1, plex[(i+1)%2]);
+      
+    delay(50);
+    float sensorValue = analogRead(A0) * (5.0/1023);
+    
+    Sensing[i] = sensorValue/ambientValue;
+    delay(10);       
+  }
+
+  float diff = Sensing[0] - Sensing[1];
+  int color;
+  Serial.println(diff);
+  if ((fabs(diff) < 3 && fabs(diff) > 0.2)) {
+    color = 2; //black
+  } else if (fabs(diff) < 0.15) {
+    color = 1; //yellow
+  } else if (diff > 3.1) {
+    color = 3;//red blue
+  } else if (diff < -8) {
+    color = 4;
+  }
+  return color;
+}
+
+void laneFollow(int colorOfLane, bool move) {
+  int color = colorSensing(Sensing);
+  if (currentColor == colorOfLane) {
+    forward();
+  } else {
+    float Sensing[3];
+    int sweeper = 5;
+    int color;
+    bool laneFound = false;
+    for (int j = 0; j < sweeper; j++) {
+      leftTurn();
+      color = colorSensing(Sensing);
+      if (color = colorOfLane) {
+        laneFound = true;
+      }
+    }
+    if (!laneFound) {
+      for (int j = 0; j < sweeper; j++) {
+        rightTurn();
+        color = colorSensing(Sensing);
+        if (color = colorOfLane) {
+          laneFound = true;
+        }
+      }
+    }
+  }
+
+
+}
 void changeStateVariable() {
   if (stateVariable == 6) {
     stateVariable = 0;
@@ -277,16 +361,16 @@ void changeState() {
       break;
   }
 }
-
+int motorSpeed = 150;
 void forwardRight() {
-    analogWrite(10, 85);
+  analogWrite(10, motorSpeed);
   digitalWrite(3, LOW);
   //digitalWrite(4, HIGH);
 }
 
 void backwardRight() {
   // digitalWrite(3, HIGH);
-  analogWrite(3, 85);
+  analogWrite(3, motorSpeed);
   digitalWrite(10, LOW);
 }
 
@@ -296,13 +380,13 @@ void stopMotorRight() {
 }
 
 void forwardLeft() {
-  analogWrite(6, 85);
+  analogWrite(6, motorSpeed);
   digitalWrite(5, LOW);
   //digitalWrite(6, HIGH);
 }
 
 void backwardLeft() {
-  analogWrite(5, 85);
+  analogWrite(5, motorSpeed);
   //digitalWrite(5, HIGH);
   digitalWrite(6, LOW);
 }
@@ -341,7 +425,7 @@ void backward() {
 }
 
 void stopAll() {
-  Serial.println("STOP");
+  //Serial.println("STOP");
   stopMotorRight();
   stopMotorLeft();
   //delay(100);
