@@ -33,10 +33,12 @@ int currIndex = 0;
 bool move = false;
 
 int soundCount = 0;
+int sweeper = 20;
 
 int movePrev = 0;
 int pathColorsSize = 2;
 int pathColors[2];
+int falls = 0;
 
 // the setup function runs once when you press reset or power the board
 void setup() {
@@ -80,7 +82,7 @@ void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
   previousButtonState = digitalRead(2);
   String Colors[] = {"Red","Blue", "Ambient"};
-  
+
 }
 
 
@@ -169,8 +171,8 @@ void loop() {
     }
     //Serial.println(move);
   float wallSense = analogRead(A5) * (5.0/1023);
-  //Serial.print("wallSenseValue: ");
-  //Serial.println(wallSense);
+  // Serial.print("wallSenseValue: ");
+  // Serial.println(wallSense);
   // put your main code here, to run repeatedly:
   if (wallSense >= 1.0) {
     Serial.println("WALL:");
@@ -283,9 +285,9 @@ int colorSensing(float* Sensing) {
   } else if (fabs(diff) < 0.15) {
     color = 1; //yellow
   } else if (diff > 3.1) {
-    color = 3;//red blue
+    color = 3;//red 
   } else if (diff < -8) {
-    color = 4;
+    color = 4; //blue
   }
   return color;
 }
@@ -293,32 +295,34 @@ int colorSensing(float* Sensing) {
 void laneFollow(int colorOfLane, bool move) {
   float Sensing[3];
   int color = colorSensing(Sensing);
+  int prevColor = color;
   if (color == colorOfLane) {
+    sweeper = 10;
     forward();
   } else {
-    
-    int sweeper = 5;
-    bool laneFound = false;
-    for (int j = 0; j < sweeper; j++) {
-      leftTurn();
-      color = colorSensing(Sensing);
-      if (color = colorOfLane) {
-        laneFound = true;
+      if(color != prevColor) {
+        falls++;
       }
-    }
-    if (!laneFound) {
-      for (int j = 0; j < sweeper; j++) {
-        rightTurn();
-        color = colorSensing(Sensing);
-        if (color = colorOfLane) {
-          laneFound = true;
+      if(sweeper >= 8) {
+        if (falls % 2 == 0) {
+          leftTurn();
+        }
+        else {
+          rightTurn();
         }
       }
-    }
+      else {
+        if (falls % 2 == 0) {
+          rightTurn();
+        }
+        else {
+          leftTurn();
+        }
+      }
+      sweeper -= 1;
   }
-
-
 }
+
 void changeStateVariable() {
   if (stateVariable == 6) {
     stateVariable = 0;
