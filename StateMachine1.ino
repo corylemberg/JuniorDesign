@@ -3,6 +3,14 @@
 #include <String.h>
 #include "SoftwareSerial.h"
 #include "DFRobotDFPlayerMini.h"
+#include <FastLED.h>
+
+#define LED_PIN   12
+#define NUM_LEDS  12
+
+
+CRGB leds[NUM_LEDS];
+float input;
 
 static const uint8_t D9 = 9;
 static const uint8_t D11 = 11;
@@ -12,7 +20,7 @@ DFRobotDFPlayerMini MP3player;
 
 int buttonState = 0;
 int previousButtonState = 0;
-int stateVariable = 0;
+int stateVariable = 9;
 
 int RedLEDpinTest1 = 7;
 int BlueLEDpinTest1 = 8;
@@ -47,7 +55,7 @@ int colorFindYellow = 0;
 bool foundWallYellow = false;
 
 int prevColor = 0;
-int delay90 = 1350;
+int delay90 = 2000;
 int delay180 = 2*delay90;
 int sameCount = 0;
 int robustcolor = 0;
@@ -60,7 +68,9 @@ void setup() {
 
   Serial.begin(9600);
   mySerial.begin(9600);
-  
+  input = 0;
+
+  FastLED.addLeds<WS2812, LED_PIN, GRB>(leds, NUM_LEDS);
   MP3player.begin(mySerial);
 
   MP3player.volume(30);
@@ -95,6 +105,7 @@ void setup() {
   pinMode(RedLEDpinTest1, OUTPUT);
   pinMode(BlueLEDpinTest1, OUTPUT);
   pinMode(LED_BUILTIN, OUTPUT);
+  pinMode(LED_PIN, OUTPUT);
   previousButtonState = digitalRead(2);
   String Colors[] = {"Red","Blue", "Ambient"};
   
@@ -103,7 +114,21 @@ void setup() {
 
 
 void loop() {
-
+  float input = analogRead(A2) * 5.0/1023;
+  int charge = (input - 3.75) / 0.75 * 12.0;
+  if(charge <= 0) {
+    charge = 0;
+  }
+  else if(charge >= 12) {
+    charge = 12;
+  }
+  for (int i = 0; i <= NUM_LEDS-1; i++) {
+      if (i <= charge) {
+        leds[i] = CRGB (80 - (charge * 6), charge * 6, 0);
+      }
+      else leds[i] = CRGB (0, 0, 0);
+    FastLED.show();
+  }
     // int messageSize = client.parseMessage();
   //   if (messageSize > 0) {
   //     Serial.println("Received a message:");
@@ -125,104 +150,136 @@ void loop() {
   //       stopAll();
   //     }
   //   }
-      Serial.print("stateVariable: ");
-      Serial.println(stateVariable);
-  if (stateVariable == 0) {
-      // fwd until wall
-      forward();
-      if (wallSensor()) {
-        stopAll();
-        delay(100);
-        stateVariable = 1;
-      }
-  } 
-  else if (stateVariable == 1){
-  // flip around
-      leftTurn();
-      delay(delay180 + 800);
-      stopAll();
-      stateVariable = 2;
-  } 
-  else if (stateVariable == 2){
-    // fwd until red
-      forward();
-      int redcolor = robustColorSensing(currIndex);
+  //     Serial.print("stateVariable: ");
+  //     Serial.println(stateVariable);
+  // if (stateVariable == 0) {
+  //     // fwd until wall
+  //     forward();
+  //     if (wallSensor()) {
+  //       stopAll();
+  //       delay(100);
+  //       stateVariable = 1;
+  //     }
+  // } 
+  // else if (stateVariable == 1){
+  // // flip around
+  //     leftTurn();
+  //     delay(delay180);
+  //     stopAll();
+  //     stateVariable = 2;
+  // } 
+  // else if (stateVariable == 2){
+  //   // fwd until red
+  //     forward();
+  //     int bluecolor = robustColorSensing(currIndex);
 
-      if (redcolor == 4) {
-        // stopAll();
-        // delay(100);
-        playBlue();
-        Serial.println("TURNING...");
-        leftTurn();
-        delay(delay90);
-        stopAll();
-        delay(100);
-        stateVariable = 3;
-        // return;
-        //signal to bot 2 that red is found here
-      }
-    } 
-    else if (stateVariable == 3){// lane follow red
-      Serial.println("LANE FOLLOWING RED");
-      laneFollow(4); 
-      if (wallSensor()) {
-        rightTurn();
-        delay(delay90 + 100);
-        stopAll();
-        delay(300);
-        stateVariable = 4;
-      }
-    }
-    else if (stateVariable == 4){  // go fwd to find yellow
-      forward();
-      //stopAll();
-      //int colorFindYellow = robustColorSensing(currIndex);
+  //     if (bluecolor == 4) {
+  //       // stopAll();
+  //       delay(200);
+  //       playBlue();
+  //       Serial.println("TURNING...");
+  //       rightTurn();
+  //       delay(delay90-delay90/5);
+  //       stopAll();
+  //       delay(100);
+  //       stateVariable = 3;
+  //       // return;
+  //       //signal to bot 2 that red is found here
+  //     }
+  //   } 
+  //   else if (stateVariable == 3){// lane follow red
+  //     Serial.println("LANE FOLLOWING Blue");
+  //     laneFollow(4); 
+  //     if (wallSensor()) {
+  //       rightTurn();
+  //       delay(delay90+delay90/8);
+  //       stopAll();
+  //       delay(100);
+  //       stateVariable = 4;
+  //     }
+  //   }
+  //   else if (stateVariable == 4){  // go fwd to find yellow
+  //     forward();
+  //     //stopAll();
+  //     //int colorFindYellow = robustColorSensing(currIndex);
       
-      colorSensing(Sensing, currIndex);
-      int colorFindYellow = pathColors[currIndex];
-      // Serial.println(colorFindYellow);
-      if (colorFindYellow == 1) {
-        forward();
-        delay(500);
-        playYellow();
-        rightTurn();
-        delay(delay90 + 800);
-        stopAll();
-        delay(100);
-        forward();
-        delay(50);
-        stopAll();
-        delay(50);
-        stateVariable = 5;
-      }
+  //     colorSensing(Sensing, currIndex);
+  //     int colorFindYellow = pathColors[currIndex];
+  //     // Serial.println(colorFindYellow);
+  //     if (colorFindYellow == 1) {
+  //       forward();
+  //       delay(500);
+  //       playYellow();
+  //       rightTurn();
+  //       delay(delay90-delay90/4);
+  //       stopAll();
+  //       // delay(100);
+  //       // forward();
+  //       // delay(50);
+  //       // stopAll();
+  //       // delay(50);
+  //       stateVariable = 5;
+  //     }
+  //   }
+  //   else if (stateVariable == 5){  // lane follow yellow
+  //     // WAIT UNTIL RECIEVED SIGNAL FROM BOT 2
+  //     Serial.println("LANE FOLLOWING YELLOW");
+  //     robustLaneFollow(1); 
+  //     if (wallSensor()) {
+  //       rightTurn();
+  //       delay(delay90);
+  //       stopAll();
+  //       delay(100);
+  //       stateVariable = 6;
+  //       // tell bot 2 we have returned
+  //     }
+  //   }
+  //   else if (stateVariable == 6){
+  //   forward();
+  //   if (wallSensor()) {
+  //     stopAll();
+  //     stateVariable = 7;
+  //     }
+  //   }
+  //   else if (stateVariable == 7){ // idle
+  //     // WAIT to ACKNOWLEDGE BOT2 RETURN
+  //     stopAll();
+  //   } 
+  //   else if (stateVariable == 8){
+      
+  //   }
+
+    //forward();
+      int robustcolor= robustColorSensing(currIndex);
+      Serial.println(robustcolor);
+      //int robustcolor = pathColors[currIndex];
+       if (robustcolor == 2) {
+      robustcolor = 2; //black
+      playBlack();
+    } else if (robustcolor == 1) {
+      robustcolor = 1; //yellow
+      playYellow();
+    } else if (robustcolor == 3) {
+      robustcolor = 3;//red 
+      playRed();
+    } else if (robustcolor == 4) {
+      robustcolor = 4; //blue
+      playBlue();
     }
-    else if (stateVariable == 5){  // lane follow yellow
-      // WAIT UNTIL RECIEVED SIGNAL FROM BOT 2
-      Serial.println("LANE FOLLOWING YELLOW");
-      laneFollow(1); 
-      if (wallSensor()) {
-        rightTurn();
-        delay(delay90);
-        stopAll();
-        delay(100);
-        stateVariable = 6;
-        // tell bot 2 we have returned
-      }
-    }
-    else if (stateVariable == 6){
-    forward();
-    if (wallSensor()) {
-      stopAll();
-      stateVariable = 7;
-      }
-    }
-    else if (stateVariable == 7){ // idle
-      // WAIT to ACKNOWLEDGE BOT2 RETURN
-      stopAll();
-    }
-    else {
-      stopAll();
-    }
+    // if (pathColors[currIndex] == 2) {
+    //   robustcolor = 2; //black
+    //   playBlack();
+    // } else if (pathColors[currIndex] == 1) {
+    //   robustcolor = 1; //yellow
+    //   playYellow();
+    // } else if (pathColors[currIndex] == 3) {
+    //   robustcolor = 3;//red 
+    //   playRed();
+    // } else if (pathColors[currIndex] == 4) {
+    //   robustcolor = 4; //blue
+    //   playBlue();
+    // }
+    
   // // Serial.println("COLOR: ");
   // // Serial.println(r);
   // // Serial.println(robustColorSensing(currIndex));
@@ -321,14 +378,19 @@ int robustColorSensing(int currIndex) {
 
     // currIndex = 0;
     //Serial.println("Robust Sensed");
-    if (pathColors[0] == 2) {
+    
+       if (pathColors[0] == 2) {
       robustcolor = 2; //black
+
     } else if (pathColors[0] == 1) {
       robustcolor = 1; //yellow
+
     } else if (pathColors[0] == 3) {
       robustcolor = 3;//red 
+
     } else if (pathColors[0] == 4) {
       robustcolor = 4; //blue
+
     }
 
   }
@@ -339,7 +401,7 @@ int robustColorSensing(int currIndex) {
 }
 
 
-int sweeperNumber = 6;
+int sweeperNumber = 10;
 
 void laneFollow(int colorOfLane) {
   // float Sensing[3];
@@ -351,9 +413,52 @@ void laneFollow(int colorOfLane) {
     sweeper = sweeperNumber;
     forward();
   } else {
+    Serial.print("Sweeper Number: ");
+    Serial.println(sweeper);
       if(color != prevColor) {
         falls++;
       }
+    Serial.print("Falls Number: ");
+    Serial.println(falls);
+      if(sweeper > sweeperNumber*1/2) {
+        if (falls % 2 == 0) {
+          leftTurn();
+        }
+        else {
+          rightTurn();
+        }
+      }
+      else {
+        if (falls % 2 == 0) {
+          rightTurn();
+        }
+        else {
+          leftTurn();
+        }
+      }
+      sweeper -= 1;
+  }
+  prevColor = color;
+}
+
+
+void robustLaneFollow(int colorOfLane) {
+  // float Sensing[3];
+  int color = robustColorSensing(currIndex);
+
+  // Serial.print("COLOR LANE FOLLOWING: ");
+  // Serial.println(color);
+  if (color == colorOfLane) {
+    sweeper = sweeperNumber;
+    forward();
+  } else {
+    Serial.print("Sweeper Number: ");
+    Serial.println(sweeper);
+      if(color != prevColor) {
+        falls++;
+      }
+    Serial.print("Falls Number: ");
+    Serial.println(falls);
       if(sweeper > sweeperNumber*1/2) {
         if (falls % 2 == 0) {
           leftTurn();
@@ -507,7 +612,7 @@ void changeState2() {
 }
 
 
-int motorSpeed = 70;
+int motorSpeed = 40;
 void forwardRight() {
   analogWrite(10, motorSpeed);
   digitalWrite(3, LOW);
@@ -579,21 +684,28 @@ void stopAll() {
 
 void playBlue() {
   MP3player.play(2);
- // delay(500);
+ delay(3000);
+  MP3player.stop();
 }
 
 void playRed() {
   MP3player.play(3);
+   delay(3000);
+  MP3player.stop();
   //delay(500);
 }
 
 void playYellow() {
   MP3player.play(4);
+   delay(3000);
+  MP3player.stop();
   //delay(500);
 }
 
 void playBlack() {
   MP3player.play(5);
+   delay(3000);
+  MP3player.stop();
   //delay(500);
 }
 
