@@ -2,14 +2,4 @@
 
 Status: Git is setup. Lets get active.
 
-**To Do List:**
-- [x] Arduino State Machine
-- [x] Motor Control
-- [x] Server Communication
-- [x] Color Sensing
-- [ ] Mechanical Build
-- [X] Collision Avoidance
-- [ ] Lane Following
-- [ ] Solo Demo
-- [ ] Server Communication
-- [ ] Final Demo
+FINAL VERSION is in StateMachineFinal folder. All other files ignorable.
